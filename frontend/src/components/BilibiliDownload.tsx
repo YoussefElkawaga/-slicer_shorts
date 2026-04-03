@@ -10,7 +10,7 @@ interface BilibiliDownloadProps {
   onDownloadSuccess?: (projectId: string) => void
 }
 
-// 使用从API导入的BilibiliDownloadTask类型
+// Using BilibiliDownloadTask type imported from API
 
 const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }) => {
   const [url, setUrl] = useState('')
@@ -29,7 +29,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
   
   const { addProject } = useProjectStore()
 
-  // 加载视频分类配置
+  // Load video category config
   useEffect(() => {
     const loadCategories = async () => {
       setLoadingCategories(true)
@@ -52,7 +52,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
     loadCategories()
   }, [])
 
-  // 清理轮询
+  // Cleanup polling on unmount
   useEffect(() => {
     return () => {
       if (pollingInterval) {
@@ -118,7 +118,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
     }
 
     setParsing(true)
-    setError('') // 清除之前的错误信息
+    setError('') // Clear previous errors
     
     try {
       let response
@@ -135,9 +135,9 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
       const parsedVideoInfo = response.video_info
       
       setVideoInfo(parsedVideoInfo)
-      setError('') // 解析成功，清除错误信息
+      setError('') // Parse successful, clear errors
       
-      // 自动填充项目名称
+      // Auto-fill project name
       if (!projectName && parsedVideoInfo.title) {
         setProjectName(parsedVideoInfo.title)
       }
@@ -172,7 +172,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
             onDownloadSuccess(task.project_id)
           }
           
-          // 重置状态
+          // Reset state
           resetForm()
         } else if (task.status === 'failed') {
           clearInterval(interval)
@@ -182,7 +182,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
           resetForm()
         }
       } catch (error) {
-        console.error('轮询任务状态失败:', error)
+        console.error('Failed to poll task status:', error)
       }
     }, 2000)
     
@@ -225,14 +225,14 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
         response = await bilibiliApi.createYouTubeDownloadTask(requestBody)
       }
       
-      // 检查响应是否包含项目ID（新的优化后的响应格式）
+      // Check if response contains project ID (new optimized response format)
       if (response.project_id) {
-        // 新格式：项目已创建，立即重置表单
+        // New format: project created, reset form immediately
         setCurrentTask(null)
         setDownloading(false)
         resetForm()
         
-        // 显示统一的成功提示
+        // Show unified success message
         const platformName = videoType === 'bilibili' ? 'Bilibili' : 'YouTube'
         message.success(`${platformName} project created! Downloading in background, you can continue adding more.`)
         
@@ -240,7 +240,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
           onDownloadSuccess(response.project_id)
         }
       } else {
-        // 旧格式：继续轮询任务状态
+        // Legacy format: continue polling task status
         setCurrentTask(response)
         startPolling(response.id, videoType)
       }
@@ -258,7 +258,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
     setCurrentTask(null)
     setVideoInfo(null)
     setError('')
-    // 保持分类和浏览器选择，方便用户继续添加项目
+    // Keep category and browser selection for convenience when adding more projects
     // setSelectedCategory(categories[0].value)
     // setSelectedBrowser('')
   }
@@ -279,7 +279,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
       margin: '0 auto'
     }}>
 
-      {/* 输入表单 */}
+      {/* Input form */}
       <div style={{ marginBottom: '16px' }}>
         <Space direction="vertical" style={{ width: '100%' }} size={16}>
           <div>
@@ -288,7 +288,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
               value={url}
               onChange={(e) => {
                 setUrl(e.target.value)
-                // 清除之前的解析结果和错误信息
+                // Clear previous parse results and errors
                 if (videoInfo) {
                   setVideoInfo(null)
                   setProjectName('')
@@ -298,7 +298,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
                 }
               }}
               onBlur={() => {
-                // 失去焦点时自动解析
+                // Auto-parse on blur
                 if (url.trim() && !videoInfo && validateVideoUrl(url.trim())) {
                   parseVideoInfo();
                 }
@@ -340,7 +340,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
              )}
           </div>
           
-          {/* 显示解析成功的视频信息 */}
+          {/* Show parsed video info on success */}
           {videoInfo && (
             <div style={{
               background: 'rgba(102, 126, 234, 0.1)',
@@ -361,7 +361,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
             </div>
           )}
           
-          {/* 只有解析成功后才显示项目名称和分类 */}
+          {/* Only show project name and category after successful parse */}
           {videoInfo && (
             <>
               <div>
@@ -544,7 +544,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
         </Space>
       </div>
 
-      {/* 操作按钮 - 只有解析成功后才显示 */}
+      {/* Action buttons - only shown after successful parse */}
       {videoInfo && (
         <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center', gap: '12px' }}>
           <Button
@@ -589,7 +589,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
         </div>
       )}
 
-      {/* 下载进度 */}
+      {/* Download progress */}
       {currentTask && (
         <Card
           style={{

@@ -4,13 +4,12 @@ import {
   CheckCircleOutlined, 
   LoadingOutlined, 
   ExclamationCircleOutlined, 
-  ReloadOutlined,
-  CloseOutlined
+  ReloadOutlined
 } from '@ant-design/icons'
 import { projectApi } from '../services/api'
 import { useProjectStore } from '../store/useProjectStore'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 const { Step } = Steps
 
 interface ProcessingStatus {
@@ -40,12 +39,12 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
   const { updateProject } = useProjectStore()
 
   const steps = [
-    { title: '大纲提取', description: '从视频转写文本中提取结构性大纲' },
-    { title: '时间定位', description: '基于SRT字幕定位话题时间区间' },
-    { title: '内容评分', description: '多维度评估片段质量与传播潜力' },
-    { title: '标题生成', description: '为高分片段生成吸引人的标题' },
-    { title: '主题聚类', description: '将相关片段聚合为合集推荐' },
-    { title: '视频切割', description: '使用FFmpeg生成切片与合集视频' }
+    { title: 'Outline Extraction', description: 'Extract structural outline from video transcripts' },
+    { title: 'Time Localization', description: 'Locate topic time intervals based on SRT subtitles' },
+    { title: 'Content Scoring', description: 'Multi-dimensional evaluation of clip quality and potential' },
+    { title: 'Title Generation', description: 'Generate engaging titles for high-scoring clips' },
+    { title: 'Topic Clustering', description: 'Cluster related clips into collection recommendations' },
+    { title: 'Video Slicing', description: 'Use FFmpeg to generate clips and collections' }
   ]
 
   useEffect(() => {
@@ -59,7 +58,7 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
         const statusData = await projectApi.getProcessingStatus(projectId)
         setStatus(statusData)
         
-        // 更新项目状态
+        // Update project status
         updateProject(projectId, {
           status: statusData.status,
           current_step: statusData.current_step,
@@ -67,7 +66,7 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
           error_message: statusData.error_message
         })
         
-        // 如果处理完成，通知父组件
+        // If processing is complete, notify parent component
         if (statusData.status === 'completed') {
           onComplete?.(projectId)
         }
@@ -76,10 +75,10 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
       }
     }
 
-    // 立即检查一次状态
+    // Check status immediately
     checkStatus()
     
-    // 如果任务还在进行中，定期检查状态
+    // If task is still in progress, check status periodically
     const interval = setInterval(checkStatus, 2000)
     
     return () => clearInterval(interval)
@@ -91,13 +90,13 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
     setLoading(true)
     try {
       if (status?.current_step !== undefined) {
-        // 从当前步骤重试
+        // Retry from current step
         await projectApi.restartStep(projectId, status.current_step)
       } else {
-        // 完全重试
+        // Full retry
         await projectApi.retryProcessing(projectId)
       }
-      // 重新开始状态检查
+      // Restart status checking
       setStatus(null)
     } catch (error) {
       console.error('Retry error:', error)
@@ -147,14 +146,14 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
       title={
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <LoadingOutlined style={{ color: '#1890ff' }} />
-          <span>任务处理进度</span>
+          <span>Task Processing Progress</span>
         </div>
       }
       open={visible}
       onCancel={onClose}
       footer={[
         <Button key="close" onClick={onClose}>
-          关闭
+          Close
         </Button>,
         ...(status?.status === 'error' ? [
           <Button 
@@ -164,7 +163,7 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
             loading={loading}
             onClick={handleRetry}
           >
-            从当前步骤重试
+            Retry from Current Step
           </Button>
         ] : [])
       ]}
@@ -178,12 +177,12 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <Spin size="large" />
             <div style={{ marginTop: '16px', color: '#666' }}>
-              正在获取任务状态...
+              Fetching task status...
             </div>
           </div>
         ) : (
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
-            {/* 整体进度 */}
+            {/* Overall Progress */}
             <div>
               <div style={{ 
                 display: 'flex', 
@@ -191,9 +190,9 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
                 alignItems: 'center',
                 marginBottom: '8px'
               }}>
-                <Text strong>整体进度</Text>
+                <Text strong>Overall Progress</Text>
                 <Text type="secondary">
-                  {status.current_step}/{status.total_steps} 步骤
+                  {status.current_step}/{status.total_steps} steps
                 </Text>
               </div>
               <Progress 
@@ -206,7 +205,7 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
               />
             </div>
 
-            {/* 当前步骤信息 */}
+            {/* Current Step Info */}
             <div style={{
               background: '#f8f9fa',
               padding: '16px',
@@ -215,7 +214,7 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                 {getStepIcon(status.current_step)}
-                <Text strong>当前步骤: {status.step_name}</Text>
+                <Text strong>Current Step: {status.step_name}</Text>
               </div>
               <Progress 
                 percent={status.progress}
@@ -224,19 +223,19 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
               />
             </div>
 
-            {/* 错误信息 */}
+            {/* Error Information */}
             {status.status === 'error' && status.error_message && (
               <Alert
-                message="处理失败"
+                message="Processing Failed"
                 description={status.error_message}
                 type="error"
                 showIcon
               />
             )}
 
-            {/* 步骤列表 */}
+            {/* Step List */}
             <div>
-              <Text strong style={{ marginBottom: '16px', display: 'block' }}>处理步骤</Text>
+              <Text strong style={{ marginBottom: '16px', display: 'block' }}>Processing Steps</Text>
               <Steps
                 direction="vertical"
                 size="small"
@@ -255,11 +254,11 @@ const TaskProgressModal: React.FC<TaskProgressModalProps> = ({
               </Steps>
             </div>
 
-            {/* 完成提示 */}
+            {/* Completion Notice */}
             {status.status === 'completed' && (
               <Alert
-                message="处理完成"
-                description="视频已成功处理，您可以查看生成的片段和合集。"
+                message="Processing Complete"
+                description="The video has been successfully processed. You can now view the generated clips and collections."
                 type="success"
                 showIcon
               />

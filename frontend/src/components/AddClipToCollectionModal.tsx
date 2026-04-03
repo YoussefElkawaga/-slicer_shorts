@@ -4,7 +4,7 @@ import { SearchOutlined, PlayCircleOutlined } from '@ant-design/icons'
 import { Clip } from '../store/useProjectStore'
 import './AddClipToCollectionModal.css'
 
-const { Text, Title } = Typography
+const { Text } = Typography
 const { Search } = Input
 
 interface AddClipToCollectionModalProps {
@@ -25,12 +25,12 @@ const AddClipToCollectionModal: React.FC<AddClipToCollectionModalProps> = ({
   const [selectedClipIds, setSelectedClipIds] = useState<string[]>([])
   const [searchText, setSearchText] = useState('')
 
-  // 过滤出不在当前合集中的切片
+  // Filter out clips that are not in the current collection
   const availableClips = useMemo(() => {
     return clips.filter(clip => !existingClipIds.includes(clip.id))
   }, [clips, existingClipIds])
 
-  // 根据搜索文本过滤切片
+  // Filter clips by search text
   const filteredClips = useMemo(() => {
     if (!searchText.trim()) {
       return availableClips
@@ -111,7 +111,7 @@ const AddClipToCollectionModal: React.FC<AddClipToCollectionModalProps> = ({
       ]}
     >
       <div className="add-clip-modal-content">
-        {/* 搜索和操作栏 */}
+        {/* Search and Action Bar */}
         <div className="search-section">
           <Search
             placeholder="Search clip title, content or recommendation..."
@@ -140,7 +140,7 @@ const AddClipToCollectionModal: React.FC<AddClipToCollectionModalProps> = ({
           </div>
         </div>
 
-        {/* 切片列表 */}
+        {/* Clip List */}
         <div className="clips-list-container">
           {filteredClips.length > 0 ? (
             <List

@@ -25,7 +25,7 @@ import CollectionPreviewModal from '../components/CollectionPreviewModal'
 import CreateCollectionModal from '../components/CreateCollectionModal'
 import { useCollectionVideoDownload } from '../hooks/useCollectionVideoDownload'
 import { ProjectTaskManager } from '../components/ProjectTaskManager'
-// import { useWebSocket, WebSocketEventMessage } from '../hooks/useWebSocket'  // 已禁用WebSocket系统
+// import { useWebSocket, WebSocketEventMessage } from '../hooks/useWebSocket'  // WebSocket system disabled
 
 const { Content } = Layout
 const { Title, Text } = Typography
@@ -53,14 +53,14 @@ const ProjectDetailPage: React.FC = () => {
   const [selectedCollection, setSelectedCollection] = useState<any>(null)
   const { generateAndDownloadCollectionVideo } = useCollectionVideoDownload()
 
-  // WebSocket连接已禁用，使用新的简化进度系统
+  // WebSocket connection disabled, using new simplified progress system
   // const handleWebSocketMessage = (message: WebSocketEventMessage) => {
-  //   console.log('ProjectDetailPage收到WebSocket消息:', message)
+  //   console.log('ProjectDetailPage received WebSocket message:', message)
   //   
   //   switch (message.type) {
   //     case 'task_progress_update':
-  //       console.log('📊 收到任务进度更新:', message)
-  //       // 如果消息是针对当前项目的，刷新项目状态
+  //       console.log('📊 Received task progress update:', message)
+  //       // Refresh project status if message is for the current project
   //       if (message.project_id === id) {
   //         loadProject()
   //         loadProcessingStatus()
@@ -68,8 +68,8 @@ const ProjectDetailPage: React.FC = () => {
   //       break
   //       
   //     case 'project_update':
-  //       console.log('📊 收到项目更新:', message)
-  //       // 如果消息是针对当前项目的，刷新项目状态
+  //       console.log('📊 Received project update:', message)
+  //       // Refresh project status if message is for the current project
   //       if (message.project_id === id) {
   //         loadProject()
   //         loadProcessingStatus()
@@ -77,7 +77,7 @@ const ProjectDetailPage: React.FC = () => {
   //       break
   //       
   //     default:
-  //       console.log('忽略未知类型的WebSocket消息:', (message as any).type)
+  //       console.log('Ignoring unknown WebSocket message type:', (message as any).type)
   //   }
   // }
 
@@ -86,22 +86,22 @@ const ProjectDetailPage: React.FC = () => {
   //   onMessage: handleWebSocketMessage
   // })
 
-  // WebSocket订阅已禁用，使用新的简化进度系统
+  // WebSocket subscriptions disabled, using new simplified progress system
   // useEffect(() => {
   //   if (isConnected && id) {
   //     const desiredChannels = [`project_${id}`]
-  //     console.log('ProjectDetailPage同步订阅频道:', desiredChannels)
+  //     console.log('ProjectDetailPage synchronizing channels:', desiredChannels)
   //     syncSubscriptions(desiredChannels)
   //   } else if (isConnected && !id) {
-  //     // 如果没有项目ID，清空订阅
-  //     console.log('ProjectDetailPage清空订阅')
+  //     // Clear subscriptions if no project ID
+  //     console.log('ProjectDetailPage clearing subscriptions')
   //     syncSubscriptions([])
   //   }
   // }, [isConnected, id, syncSubscriptions])
 
   useEffect(() => {
     if (id) {
-      // 只有当store中没有currentProject或者currentProject的id与当前id不匹配时才重新加载
+      // Only reload if currentProject is missing or ID mismatch
       if (!currentProject || currentProject.id !== id) {
         loadProject()
       }
@@ -114,7 +114,7 @@ const ProjectDetailPage: React.FC = () => {
     try {
       const project = await projectApi.getProject(id)
       
-      // 如果项目已完成，加载clips和collections
+      // Load clips and collections if project is completed
       if (project.status === 'completed') {
         try {
           const [clips, collections] = await Promise.all([
@@ -134,7 +134,7 @@ const ProjectDetailPage: React.FC = () => {
           console.log('🎯 Final project with data:', projectWithData)
           setCurrentProject(projectWithData)
           
-          // 同时更新projects数组，确保Store中的数据同步
+          // Synchronize projects array to match Store data
           const { projects } = useProjectStore.getState()
           const updatedProjects = projects.map(p => 
             p.id === id ? projectWithData : p
@@ -142,7 +142,7 @@ const ProjectDetailPage: React.FC = () => {
           useProjectStore.setState({ projects: updatedProjects })
         } catch (error) {
           console.error('Failed to load clips/collections:', error)
-          // 即使clips/collections加载失败，也设置项目基本信息
+          // Fallback to setting basic project info if clips/collections load fails
           setCurrentProject(project)
         }
       } else {
@@ -255,7 +255,7 @@ const ProjectDetailPage: React.FC = () => {
     if (sortBy === 'score') {
       return clips.sort((a, b) => b.final_score - a.final_score)
     } else {
-      // 按时间排序 - 将时间字符串转换为秒数进行比较
+      // Sort by time - convert time string to seconds for comparison
       return clips.sort((a, b) => {
         const getTimeInSeconds = (timeStr: string) => {
           const parts = timeStr.split(':')
@@ -299,7 +299,7 @@ const ProjectDetailPage: React.FC = () => {
 
   return (
     <Content style={{ padding: '24px' }}>
-      {/* 简化的项目头部 */}
+      {/* Simplified Project Header */}
       <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <Button 
@@ -328,10 +328,10 @@ const ProjectDetailPage: React.FC = () => {
         </Space>
       </div>
 
-      {/* 主要内容 */}
+      {/* Main Content */}
       {currentProject.status === 'completed' ? (
         <div>
-          {/* AI合集横向滚动区域 */}
+          {/* AI Collections Horizontal Scroll Area */}
           {currentProject.collections && currentProject.collections.length > 0 && (
             <Card style={{ marginBottom: '24px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
@@ -370,7 +370,7 @@ const ProjectDetailPage: React.FC = () => {
               >
                 {currentProject.collections
                   .sort((a, b) => {
-                    // 按创建时间倒序排列，最新的在前面
+                    // Sort by creation time descending, newest first
                     const timeA = a.created_at ? new Date(a.created_at).getTime() : 0
                     const timeB = b.created_at ? new Date(b.created_at).getTime() : 0
                     return timeB - timeA
@@ -401,7 +401,7 @@ const ProjectDetailPage: React.FC = () => {
             </Card>
           )}
           
-          {/* 视频片段区域 */}
+          {/* Video Clips Area */}
           <Card 
             style={{
               borderRadius: '16px',
@@ -418,7 +418,7 @@ const ProjectDetailPage: React.FC = () => {
               </div>
               
               <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-                {/* 排序控件 - 暗黑主题优化 */}
+                {/* Sorting Controls - Dark Theme Optimized */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <Text style={{ fontSize: '13px', color: '#b0b0b0', fontWeight: 500 }}>Sort</Text>
                   <Radio.Group
@@ -513,7 +513,7 @@ const ProjectDetailPage: React.FC = () => {
                     videoUrl={projectApi.getClipVideoUrl(currentProject.id, clip.id, clip.title || clip.generated_title)}
                     onDownload={(clipId) => projectApi.downloadVideo(currentProject.id, clipId)}
                     onClipUpdate={(clipId: string, updates: Partial<Clip>) => {
-                      // 更新本地状态
+                      // Update local state
                       if (currentProject) {
                         const updatedProject = {
                           ...currentProject,
@@ -547,13 +547,13 @@ const ProjectDetailPage: React.FC = () => {
         </div>
       ) : (
         <div>
-          {/* 任务管理组件 */}
+          {/* Task Management Component */}
           <ProjectTaskManager 
             projectId={currentProject.id} 
             projectName={currentProject.name}
           />
           
-          {/* 项目状态提示 */}
+          {/* Project Status Note */}
           <Card style={{ marginTop: '16px' }}>
             <Empty 
               image={<PlayCircleOutlined style={{ fontSize: '64px', color: '#d9d9d9' }} />}
@@ -569,7 +569,7 @@ const ProjectDetailPage: React.FC = () => {
         </div>
       )}
 
-      {/* 创建合集模态框 */}
+      {/* Create Collection Modal */}
       <CreateCollectionModal
         visible={showCreateCollection}
         clips={currentProject.clips || []}
@@ -577,7 +577,7 @@ const ProjectDetailPage: React.FC = () => {
         onCreate={handleCreateCollection}
       />
       
-      {/* 合集预览模态框 */}
+      {/* Collection Preview Modal */}
       <CollectionPreviewModal
         visible={showCollectionDetail}
         collection={selectedCollection}

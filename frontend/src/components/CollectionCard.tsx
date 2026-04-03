@@ -21,7 +21,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
   onGenerateVideo,
   onUpdate
 }) => {
-  // 按照collection.clip_ids的顺序排列clips
+  // Order clips based on collection.clip_ids
   const collectionClips = collection.clip_ids.map(clipId => clips.find(clip => clip.id === clipId)).filter(Boolean) as Clip[]
   
   const totalDuration = collectionClips.reduce((total, clip) => {
@@ -92,7 +92,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
             <PlayCircleOutlined style={{ fontSize: '40px', color: 'white' }} />
           </div>
           
-          {/* 右上角合集类型标签 */}
+          {/* Top-right collection type tag */}
           <div 
             style={{
               position: 'absolute',
@@ -114,7 +114,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
             {collection.collection_type === 'ai_recommended' ? 'AI Recommended' : 'Manual'}
           </div>
           
-          {/* 左下角片段数量 */}
+          {/* Bottom-left clip count */}
           <div 
             style={{
               position: 'absolute',
@@ -134,7 +134,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
             {collectionClips.length} clips
           </div>
           
-          {/* 右下角总时长 */}
+          {/* Bottom-right total duration */}
           <div 
             style={{
               position: 'absolute',
@@ -163,14 +163,14 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
         flexDirection: 'column',
         justifyContent: 'space-between'
       }}>
-        {/* 内容区域 - 固定高度 */}
+        {/* Content Area - Fixed Height */}
         <div style={{ 
           flex: 1,
           display: 'flex',
           flexDirection: 'column',
-          minHeight: 0 // 允许flex子项收缩
+          minHeight: 0 // Allow flex children to shrink
         }}>
-          {/* 标题区域 - 固定高度 */}
+          {/* Title Area - Fixed Height */}
           <div style={{ 
             height: '44px',
             marginBottom: '8px',
@@ -181,7 +181,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
               title={collection.collection_title}
               collectionId={collection.id}
               onTitleUpdate={(newTitle) => {
-                // 更新合集标题
+                // Update collection title
                 if (onUpdate) {
                   onUpdate(collection.id, { collection_title: newTitle })
                 }
@@ -201,7 +201,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
             />
           </div>
           
-          {/* 合集描述 - 固定高度 */}
+          {/* Collection Description - Fixed Height */}
           <div style={{ 
             height: '58px',
             marginBottom: '12px',
@@ -235,7 +235,7 @@ const CollectionCard: React.FC<CollectionCardProps> = ({
           </div>
         </div>
         
-        {/* 操作按钮 - 固定在底部 */}
+        {/* Action Buttons - Fixed at Bottom */}
         <div style={{ 
           display: 'flex', 
           gap: '8px',

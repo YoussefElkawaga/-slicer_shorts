@@ -6,6 +6,7 @@ import ProjectDetailPage from './pages/ProjectDetailPage'
 // SettingsPage removed from import
 import ShortsPage from './pages/ShortsPage'
 import ProcessingPage from './pages/ProcessingPage'
+import StatusPage from './pages/StatusPage'
 import Header from './components/Header'
 import LoginPage from './pages/LoginPage'
 import ProtectedRoute from './components/ProtectedRoute'
@@ -48,6 +49,13 @@ function App() {
             </ProtectedRoute>
           } />
           
+          
+          <Route path="/status" element={
+            <ProtectedRoute>
+              <StatusPage />
+            </ProtectedRoute>
+          } />
+
           {/* Settings Route Removed from production completely securely */}
         </Routes>
       </Content>

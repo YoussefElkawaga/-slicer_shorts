@@ -527,7 +527,7 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
                     fontSize: '12px'
                   }}
                 >
-                  移除
+                  Remove
                 </Button>
               </div>
             )}

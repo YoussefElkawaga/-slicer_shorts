@@ -75,7 +75,7 @@ const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
       destroyOnClose
     >
       <div className="modal-content">
-        {/* 头部 */}
+        {/* Header */}
         <div className="modal-header">
           <div className="header-icon">
             <PlusOutlined />
@@ -88,9 +88,9 @@ const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
 
         <Divider className="header-divider" />
 
-        {/* 表单区域 */}
+        {/* Form Section */}
         <div className="form-section">
-          {/* 合集标题 */}
+          {/* Collection Title */}
           <div className="form-item">
             <div className="form-label">
               <TagOutlined className="label-icon" />
@@ -107,7 +107,7 @@ const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
             />
           </div>
 
-          {/* 合集描述 */}
+          {/* Collection Description */}
           <div className="form-item">
             <div className="form-label">
               <FileTextOutlined className="label-icon" />
@@ -124,7 +124,7 @@ const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
             />
           </div>
 
-          {/* 选择片段 */}
+          {/* Select Clips */}
           <div className="form-item">
             <div className="form-label">
               <VideoCameraOutlined className="label-icon" />
@@ -186,7 +186,7 @@ const CreateCollectionModal: React.FC<CreateCollectionModalProps> = ({
           </div>
         </div>
 
-        {/* 底部操作 */}
+        {/* Footer Actions */}
         <div className="modal-footer">
           <Button onClick={handleCancel} className="cancel-btn">
             Cancel

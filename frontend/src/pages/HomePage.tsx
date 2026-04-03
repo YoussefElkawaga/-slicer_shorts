@@ -15,7 +15,7 @@ import BilibiliDownload from '../components/BilibiliDownload'
 import { projectApi } from '../services/api'
 import { Project, useProjectStore } from '../store/useProjectStore'
 import { useProjectPolling } from '../hooks/useProjectPolling'
-// import { useWebSocket, WebSocketEventMessage } from '../hooks/useWebSocket'  // 已禁用WebSocket系统
+// import { useWebSocket, WebSocketEventMessage } from '../hooks/useWebSocket'  // WebSocket system disabled
 
 const { Content } = Layout
 const { Title, Text } = Typography
@@ -27,7 +27,7 @@ const HomePage: React.FC = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [activeTab, setActiveTab] = useState<'upload' | 'bilibili'>('upload')
 
-  // WebSocket连接已禁用，使用新的简化进度系统
+  // WebSocket connection disabled, using new simplified progress system
   // const handleWebSocketMessage = (message: WebSocketEventMessage) => {
   //   console.log('HomePage收到WebSocket消息:', message)
   //   
@@ -54,13 +54,13 @@ const HomePage: React.FC = () => {
   //   onMessage: handleWebSocketMessage
   // })
 
-  // 使用项目轮询Hook
+  // Use project polling hook
   useProjectPolling({
     onProjectsUpdate: (updatedProjects) => {
       setProjects(updatedProjects || [])
     },
     enabled: true,
-    interval: 10000 // 10秒轮询一次
+    interval: 10000 // Poll every 10 seconds
   })
 
   useEffect(() => {
@@ -70,21 +70,20 @@ const HomePage: React.FC = () => {
   const loadProjects = async () => {
     setLoading(true)
     try {
-      // 从后端API获取真实项目数据
+      // Fetch real project data from backend API
       const projects = await projectApi.getProjects()
       setProjects(projects || [])
     } catch (error) {
       message.error('Failed to load projects')
       console.error('Load projects error:', error)
-      // 如果API调用失败，设置空数组
+      // If API call fails, set empty array
       setProjects([])
     } finally {
       setLoading(false)
     }
   }
 
-  // 使用集合差异对齐订阅项目WebSocket主题
-  // WebSocket订阅已禁用，使用新的简化进度系统
+  // WebSocket subscriptions disabled, using simplified progress system
   // useEffect(() => {
   //   if (isConnected && projects.length > 0) {
   //     const desiredChannels = projects.map(project => `project_${project.id}`)
@@ -110,14 +109,14 @@ const HomePage: React.FC = () => {
 
   const handleRetryProject = async (projectId: string) => {
     try {
-      // 查找项目状态
+      // Find project status
       const project = projects.find(p => p.id === projectId)
       if (!project) {
         message.error('Project not found')
         return
       }
       
-      // 统一使用retryProcessing API，它会自动处理视频文件不存在的情况
+      // Use retryProcessing API which auto-handles missing video files
       await projectApi.retryProcessing(projectId)
       message.success('Retrying project processing...')
       
@@ -131,13 +130,13 @@ const HomePage: React.FC = () => {
   // handleStartProcessing removed as it is no longer used
 
   const handleProjectCardClick = (project: Project) => {
-    // 导入中状态的项目不能点击进入详情页
+    // Projects still importing cannot navigate to detail page
     if (project.status === 'pending') {
       message.warning('Project is still importing, please wait')
       return
     }
     
-    // 其他状态可以正常进入详情页
+    // Other statuses can navigate to detail page normally
     navigate(`/project/${project.id}`)
   }
 
@@ -147,7 +146,7 @@ const HomePage: React.FC = () => {
       return matchesStatus
     })
     .sort((a, b) => {
-      // 按创建时间倒序排列，最新的在前面
+      // Sort by creation time descending, newest first
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
 
@@ -158,7 +157,7 @@ const HomePage: React.FC = () => {
     }}>
       <Content style={{ padding: '40px 24px', position: 'relative' }}>
         <div style={{ maxWidth: '1600px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-          {/* 文件上传区域 */}
+          {/* File upload area */}
           <div style={{ 
             marginBottom: '48px',
             marginTop: '20px',
@@ -175,7 +174,7 @@ const HomePage: React.FC = () => {
               padding: '20px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05)'
             }}>
-              {/* 标签页切换 */}
+              {/* Tab switcher */}
               <div style={{
                 display: 'flex',
                 marginBottom: '16px',
@@ -219,17 +218,17 @@ const HomePage: React.FC = () => {
                  </button>
               </div>
               
-              {/* 内容区域 */}
+              {/* Content area */}
               <div>
                 {activeTab === 'bilibili' && (
                   <BilibiliDownload onDownloadSuccess={async (projectId: string) => {
-                    // 直接跳转到处理页面，改善UX
+                    // Navigate to processing page to improve UX
                     navigate(`/processing/${projectId}`)
                   }} />
                 )}
                 {activeTab === 'upload' && (
                   <FileUpload onUploadSuccess={async (projectId: string) => {
-                    // 直接跳转到处理页面，改善UX
+                    // Navigate to processing page to improve UX
                     navigate(`/processing/${projectId}`)
                   }} />
                 )}
@@ -237,7 +236,7 @@ const HomePage: React.FC = () => {
             </div>
           </div>
 
-          {/* 项目管理区域 */}
+          {/* Project management area */}
           <div style={{
             background: 'rgba(26, 26, 46, 0.7)',
             backdropFilter: 'blur(20px)',
@@ -247,7 +246,7 @@ const HomePage: React.FC = () => {
             marginBottom: '32px',
             boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.03)'
           }}>
-            {/* 项目列表标题区域 */}
+            {/* Project list header */}
             <div style={{ 
               display: 'flex', 
               justifyContent: 'space-between', 
@@ -285,7 +284,7 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
               
-              {/* 状态筛选移到右侧 */}
+              {/* Status filter on the right */}
               <div style={{ 
                 display: 'flex', 
                 alignItems: 'center'
@@ -333,7 +332,7 @@ const HomePage: React.FC = () => {
               </div>
             </div>
 
-            {/* 项目列表内容 */}
+            {/* Project list content */}
              <div>
                {loading ? (
                  <div style={{ 

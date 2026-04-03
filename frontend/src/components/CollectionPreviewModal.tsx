@@ -49,14 +49,14 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
   const { setDragging } = useProjectStore()
   const { isGenerating, generateAndDownloadCollectionVideo } = useCollectionVideoDownload()
 
-  // 从store中获取最新的collection状态
+  // Get latest collection state from store
   const { projects, currentProject, lastEditTimestamp } = useProjectStore()
   const latestCollection = collection ? 
     (currentProject?.collections?.find(c => c.id === collection.id) || 
      projects.find(p => p.collections?.some(c => c.id === collection.id))?.collections?.find(c => c.id === collection.id) ||
      collection) : null
 
-  // 按照latestCollection.clip_ids的顺序排列clips
+  // Arrange clips based on latestCollection.clip_ids order
   const collectionClips = latestCollection ? 
     latestCollection.clip_ids.map(clipId => clips.find(clip => clip.id === clipId)).filter(Boolean) as Clip[] : []
   const currentClip = collectionClips[currentClipIndex]
@@ -102,24 +102,24 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
   }
 
   const handleDragStart = () => {
-    console.log('拖拽开始')
+    console.log('Drag started')
     setDragging(true)
   }
 
   const handleDragEnd = async (result: DropResult) => {
-    console.log('拖拽结束:', result)
+    console.log('Drag ended:', result)
     
-    // 无论如何都要清除拖拽状态
+    // Always clear drag state
     setDragging(false)
     
     if (!result.destination || !latestCollection) {
-      console.log('拖拽取消或无目标位置')
+      console.log('Drag cancelled or no destination target')
       return
     }
 
-    // 检查是否真的有位置变化
+    // Check if position really changed
     if (result.source.index === result.destination.index) {
-      console.log('位置未变化，跳过更新')
+      console.log('Position unchanged, skipping update')
       return
     }
 
@@ -127,17 +127,17 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
     const [reorderedItem] = newClipIds.splice(result.source.index, 1)
     newClipIds.splice(result.destination.index, 0, reorderedItem)
 
-    console.log('原始顺序:', latestCollection.clip_ids)
-    console.log('新顺序:', newClipIds)
+    console.log('Original order:', latestCollection.clip_ids)
+    console.log('New order:', newClipIds)
     
-    // 显示加载状态
+    // Show loading state
     const hideLoading = message.loading('Updating clip order...', 0)
     setIsUpdating(true)
     
     try {
       await onReorderClips(latestCollection.id, newClipIds)
       
-      // 更新当前播放索引
+      // Update current playing index
       const currentClipId = collectionClips[currentClipIndex]?.id
       if (currentClipId) {
         const newIndex = newClipIds.indexOf(currentClipId)
@@ -163,7 +163,7 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
     try {
       await onRemoveClip(latestCollection.id, clipId)
       
-      // 调整当前播放索引
+      // Adjust current play index
       const removedIndex = latestCollection.clip_ids.indexOf(clipId)
       if (removedIndex <= currentClipIndex && currentClipIndex > 0) {
         setCurrentClipIndex(currentClipIndex - 1)
@@ -239,7 +239,7 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
       getContainer={false}
     >
       <div className="collection-preview-container">
-        {/* 头部标题栏 */}
+        {/* Header Title Bar */}
         <div className="preview-header">
           <div className="header-left">
             <Title level={4} style={{ margin: 0, color: 'white', display: 'inline-block', marginRight: '12px' }}>
@@ -292,10 +292,10 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
           </div>
         </div>
 
-        {/* 主体内容 */}
+        {/* Main Content */}
         <div className="preview-content">
           <Row style={{ height: '100%' }}>
-            {/* 左侧视频播放器 */}
+            {/* Left side: Video player */}
             <Col span={16} className="video-section">
               <div className="video-player-wrapper">
                 <div className="video-container">
@@ -319,7 +319,7 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
                   )}
                 </div>
                 
-                {/* 视频信息栏 - 移到视频下方 */}
+                {/* Video info bar - moved below video */}
                 {currentClip && (
                   <div className="video-info-bar">
                     <div className="video-info-content">
@@ -329,10 +329,9 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
                             title={currentClip.title || currentClip.generated_title || 'Untitled Clip'}
                             clipId={currentClip.id}
                             onTitleUpdate={(newTitle) => {
-                              // 更新当前clip的标题
-                              const updatedClip = { ...currentClip, title: newTitle }
-                              // 这里可以触发父组件的更新回调
-                              console.log('标题已更新:', newTitle)
+                              // Update current clip title
+                              // Trigger parent update callback here
+                              console.log('Title updated:', newTitle)
                             }}
                             style={{ color: '#ffffff', fontSize: '16px', fontWeight: '500' }}
                           />
@@ -381,7 +380,7 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
               </div>
             </Col>
 
-            {/* 右侧切片列表 */}
+            {/* Right side: Clip list */}
             <Col span={8} className="playlist-section">
               <div className="playlist-container">
                 <div className="playlist-header">
@@ -515,7 +514,7 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
         </div>
       </div>
       
-      {/* 添加切片模态框 */}
+      {/* Add clip modal */}
       <AddClipToCollectionModal
         visible={showAddClipModal}
         clips={clips}
@@ -524,7 +523,7 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
         onConfirm={handleAddClips}
       />
 
-      {/* 投稿弹窗 */}
+      {/* Publish modal */}
       <UploadModal
         visible={showUploadModal}
         onCancel={() => setShowUploadModal(false)}
@@ -532,8 +531,8 @@ const CollectionPreviewModal: React.FC<CollectionPreviewModalProps> = ({
         clipIds={collectionClips.map(clip => clip.id)}
         clipTitles={collectionClips.map(clip => clip.generated_title || clip.title || 'Video Clip')}
         onSuccess={() => {
-          // 投稿成功后可以刷新数据或显示提示
-          console.log('合集投稿成功')
+          // Refresh data or show notice after publishing
+          console.log('Collection published successfully')
         }}
       />
     </Modal>

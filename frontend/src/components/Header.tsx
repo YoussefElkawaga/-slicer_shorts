@@ -1,6 +1,6 @@
 import React from 'react'
 import { Layout, Button } from 'antd'
-import { SettingOutlined, HomeOutlined, ScissorOutlined } from '@ant-design/icons'
+import { SettingOutlined, HomeOutlined, ScissorOutlined, DashboardOutlined } from '@ant-design/icons'
 import { useNavigate, useLocation } from 'react-router-dom'
 
 const { Header: AntHeader } = Layout
@@ -104,6 +104,30 @@ const Header: React.FC = () => {
           }}
         >
           AI Shorts
+        </Button>
+        
+        <Button 
+          type="primary"
+          icon={<DashboardOutlined />}
+          onClick={() => navigate('/status')}
+          style={{
+            background: location.pathname === '/status'
+              ? 'linear-gradient(135deg, #52c41a, #73d13d)'
+              : 'rgba(82, 196, 26, 0.15)',
+            border: location.pathname === '/status'
+              ? 'none'
+              : '1px solid rgba(82, 196, 26, 0.3)',
+            borderRadius: '8px',
+            height: '40px',
+            padding: '0 20px',
+            fontWeight: 600,
+            color: '#fff',
+            boxShadow: location.pathname === '/status'
+              ? '0 2px 12px rgba(82, 196, 26, 0.4)'
+              : 'none'
+          }}
+        >
+          Status
         </Button>
         
         {/* Settings button removed to hide it in deploy */}

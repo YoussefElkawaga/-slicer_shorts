@@ -65,7 +65,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
   const [uploadRecordId, setUploadRecordId] = useState<string>('')
   const [pollingInterval, setPollingInterval] = useState<ReturnType<typeof setInterval> | null>(null)
 
-  // 表单初始值
+  // Initial form values
   const initialValues = {
     title: clipTitles.length === 1 ? clipTitles[0] : `${clipTitles[0]} and ${clipIds.length - 1} more`,
     description: '',
@@ -74,18 +74,18 @@ const UploadModal: React.FC<UploadModalProps> = ({
     account_id: undefined
   }
 
-  // 获取B站账号列表
+  // Get Bilibili account list
   const [accounts, setAccounts] = useState<any[]>([])
   useEffect(() => {
     if (visible) {
-      // 调用API获取B站账号列表
+      // Call API to get Bilibili accounts
       uploadApi.getBilibiliAccounts()
         .then(data => {
           setAccounts(data)
         })
         .catch(error => {
-          console.error('获取B站账号列表失败:', error)
-          // 如果API调用失败，使用默认账号
+          console.error('Failed to get Bilibili accounts:', error)
+          // Use default account if API call fails
           setAccounts([
             { id: '1', name: 'Main Account', username: 'main_account' }
           ])
@@ -93,13 +93,13 @@ const UploadModal: React.FC<UploadModalProps> = ({
     }
   }, [visible])
 
-  // 提交投稿
+  // Submit upload
   const handleSubmit = async (values: any) => {
-    // 显示开发中提示
+    // Show in-development notice
     message.info('Bilibili upload feature is coming soon!', 3)
     return
     
-    // 原有代码已禁用
+    // Original code disabled
     if (!values.account_id) {
       message.error('Please select a Bilibili account')
       return
@@ -113,7 +113,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
     })
 
     try {
-      // 创建投稿任务
+      // Create upload task
       const response = await uploadApi.createUploadTask(projectId, {
         clip_ids: clipIds,
         account_id: values.account_id,
@@ -130,12 +130,12 @@ const UploadModal: React.FC<UploadModalProps> = ({
         progress: 30
       })
 
-      // 开始轮询上传状态
+      // Start polling upload status
       startPolling(response.record_id)
 
       message.success('Upload task created!')
     } catch (error: any) {
-      console.error('创建投稿任务失败:', error)
+      console.error('Failed to create upload task:', error)
       setUploadProgress({
         status: 'failed',
         message: `Failed to create upload task: ${error.message || 'Unknown error'}`,
@@ -146,7 +146,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
     }
   }
 
-  // 开始轮询上传状态
+  // Start polling upload status
   const startPolling = (recordId: string) => {
     const interval = setInterval(async () => {
       try {
@@ -162,7 +162,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
           setUploading(false)
           clearInterval(interval)
           
-          // 延迟关闭弹窗，让用户看到成功状态
+          // Delay closing modal so user sees success state
           setTimeout(() => {
             onSuccess?.()
             onCancel()
@@ -189,7 +189,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
             progress: 40
           })
         } else {
-          // 其他状态，逐步增加进度
+          // Other statuses, gradually increase progress
           setUploadProgress(prev => ({
             ...prev,
             message: `Task status: ${status.status}`,
@@ -197,7 +197,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
           }))
         }
       } catch (error) {
-        console.error('获取上传状态失败:', error)
+        console.error('Failed to get upload status:', error)
         setUploadProgress({
           status: 'failed',
           message: 'Failed to get upload status',
@@ -212,7 +212,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
     setPollingInterval(interval)
   }
 
-  // 清理轮询
+  // Clear polling
   useEffect(() => {
     return () => {
       if (pollingInterval) {
@@ -221,7 +221,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
     }
   }, [pollingInterval])
 
-  // 弹窗关闭时清理状态
+  // Clear state when modal closes
   const handleCancel = () => {
     if (pollingInterval) {
       clearInterval(pollingInterval)
@@ -237,7 +237,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
     onCancel()
   }
 
-  // 取消投稿任务
+  // Cancel upload task
   const handleCancelUpload = async () => {
     if (!uploadRecordId) {
       handleCancel()
@@ -245,10 +245,10 @@ const UploadModal: React.FC<UploadModalProps> = ({
     }
 
     try {
-      // 调用取消投稿API
+      // Call cancel upload API
       await uploadApi.cancelUploadTask(uploadRecordId)
       
-      // 清理状态
+      // Clear state
       if (pollingInterval) {
         clearInterval(pollingInterval)
       }
@@ -261,16 +261,16 @@ const UploadModal: React.FC<UploadModalProps> = ({
       setUploadRecordId('')
       form.resetFields()
       
-      // 显示取消成功消息
+      // Show successful cancellation message
       message.success('Upload task cancelled')
       onCancel()
     } catch (error) {
-      console.error('取消投稿失败:', error)
+      console.error('Failed to cancel upload:', error)
       message.error('Failed to cancel upload, please retry')
     }
   }
 
-  // 获取状态图标
+  // Get status icon
   const getStatusIcon = () => {
     switch (uploadProgress.status) {
       case 'pending':
@@ -286,7 +286,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
     }
   }
 
-  // 获取进度条状态
+  // Get progress bar status
   const getProgressStatus = () => {
     if (uploadProgress.status === 'failed') return 'exception'
     if (uploadProgress.status === 'success') return 'success'
@@ -313,7 +313,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
       closable={!uploading}
     >
       {!uploading ? (
-        // 投稿表单
+        // Upload Form
         <Form
           form={form}
           layout="vertical"
@@ -405,7 +405,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
           </div>
         </Form>
       ) : (
-        // 上传进度
+        // Upload Progress
         <div style={{ textAlign: 'center', padding: '20px 0' }}>
           <div style={{ marginBottom: '24px' }}>
             {getStatusIcon()}
@@ -424,7 +424,7 @@ const UploadModal: React.FC<UploadModalProps> = ({
           {uploadProgress.status === 'success' && uploadProgress.bvid && (
             <Alert
               message="Upload Successful!"
-              description={`BV号: ${uploadProgress.bvid}`}
+              description={`BV ID: ${uploadProgress.bvid}`}
               type="success"
               showIcon
               style={{ marginBottom: '16px' }}

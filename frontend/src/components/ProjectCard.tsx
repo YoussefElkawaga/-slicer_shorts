@@ -239,9 +239,9 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project, onDelete, onRetry, o
         const response = await projectApi.getProjectLogs(project.id, 20)
         setLogs(response.logs.filter(log => 
           log.message.includes('Step') || 
-          log.message.includes('开始') || 
-          log.message.includes('完成') ||
-          log.message.includes('处理') ||
+          log.message.includes('Start') || 
+          log.message.includes('Complete') ||
+          log.message.includes('Processing') ||
           log.level === 'ERROR'
         ))
       } catch (error) {

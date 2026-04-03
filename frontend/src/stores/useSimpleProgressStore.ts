@@ -185,5 +185,5 @@ export const isCompleted = (stage: string): boolean => {
 
 // Check if failed
 export const isFailed = (message: string): boolean => {
-  return message.includes('failed') || message.includes('error') || message.includes('Failed') || message.includes('失败') || message.includes('错误')
+  return message.includes('failed') || message.includes('error') || message.includes('Failed') || message.includes('Error')
 }
