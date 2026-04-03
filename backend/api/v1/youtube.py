@@ -25,6 +25,7 @@ download_tasks = {}
 class YouTubeParseRequest(BaseModel):
     url: str
     browser: Optional[str] = None
+    cookies_content: Optional[str] = None
 
 class YouTubeDownloadRequest(BaseModel):
     url: str
@@ -32,6 +33,7 @@ class YouTubeDownloadRequest(BaseModel):
     video_category: Optional[str] = "default"
     browser: Optional[str] = None
     shorts_duration_preset: Optional[str] = "short"  # ultra_short, short, medium, long
+    cookies_content: Optional[str] = None
 
 class YouTubeVideoInfo(BaseModel):
     title: str
@@ -58,7 +60,8 @@ class YouTubeDownloadTask(BaseModel):
 @router.post("/parse")
 async def parse_youtube_video(
     url: str = Form(...),
-    browser: Optional[str] = Form(None)
+    browser: Optional[str] = Form(None),
+    cookies_content: Optional[str] = Form(None)
 ):
     """解析YouTube视频信息"""
     try:
@@ -77,7 +80,15 @@ async def parse_youtube_video(
             'no_warnings': True,
         }
         
-        if browser:
+        cookie_file_path = None
+        if cookies_content and cookies_content.strip():
+            import tempfile
+            import os
+            fd, cookie_file_path = tempfile.mkstemp(suffix=".txt")
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                f.write(cookies_content)
+            ydl_opts['cookiefile'] = cookie_file_path
+        elif browser:
             ydl_opts['cookiesfrombrowser'] = (browser.lower(),)
         
         def extract_info_sync(url, ydl_opts):
@@ -85,7 +96,15 @@ async def parse_youtube_video(
                 return ydl.extract_info(url, download=False)
         
         loop = asyncio.get_event_loop()
-        info_dict = await loop.run_in_executor(None, extract_info_sync, url, ydl_opts)
+        try:
+            info_dict = await loop.run_in_executor(None, extract_info_sync, url, ydl_opts)
+        finally:
+            if cookie_file_path:
+                import os
+                try:
+                    os.remove(cookie_file_path)
+                except:
+                    pass
         
         logger.info(f"YouTube视频信息解析成功: {info_dict.get('title', 'Unknown')}")
         
@@ -125,7 +144,15 @@ async def create_youtube_download_task(request: YouTubeDownloadRequest):
             'no_warnings': True,
         }
         
-        if request.browser:
+        cookie_file_path = None
+        if request.cookies_content and request.cookies_content.strip():
+            import tempfile
+            import os
+            fd, cookie_file_path = tempfile.mkstemp(suffix=".txt")
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                f.write(request.cookies_content)
+            ydl_opts['cookiefile'] = cookie_file_path
+        elif request.browser:
             ydl_opts['cookiesfrombrowser'] = (request.browser.lower(),)
         
         def extract_info_sync(url, ydl_opts):
@@ -133,7 +160,15 @@ async def create_youtube_download_task(request: YouTubeDownloadRequest):
                 return ydl.extract_info(url, download=False)
         
         loop = asyncio.get_event_loop()
-        video_info = await loop.run_in_executor(None, extract_info_sync, request.url, ydl_opts)
+        try:
+            video_info = await loop.run_in_executor(None, extract_info_sync, request.url, ydl_opts)
+        finally:
+            if cookie_file_path:
+                import os
+                try:
+                    os.remove(cookie_file_path)
+                except:
+                    pass
         
         # 立即创建项目记录
         from ...core.database import SessionLocal
@@ -351,7 +386,15 @@ async def process_youtube_download_task(task_id: str, request: YouTubeDownloadRe
             }],
         }
         
-        if request.browser:
+        cookie_file_path = None
+        if request.cookies_content and request.cookies_content.strip():
+            import tempfile
+            import os
+            fd, cookie_file_path = tempfile.mkstemp(suffix=".txt")
+            with os.fdopen(fd, 'w', encoding='utf-8') as f:
+                f.write(request.cookies_content)
+            ydl_opts['cookiefile'] = cookie_file_path
+        elif request.browser:
             ydl_opts['cookiesfrombrowser'] = (request.browser.lower(),)
         
         # Progress tracking callback
@@ -398,7 +441,15 @@ async def process_youtube_download_task(task_id: str, request: YouTubeDownloadRe
             await asyncio.sleep(3)
         
         # Await the result (raises on error)
-        await download_task
+        try:
+            await download_task
+        finally:
+            if cookie_file_path:
+                import os
+                try:
+                    os.remove(cookie_file_path)
+                except:
+                    pass
         
         # Find downloaded files
         video_files = list(download_dir.glob("*.mp4"))

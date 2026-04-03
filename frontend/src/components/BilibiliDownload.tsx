@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Button, message, Progress, Input, Card, Typography, Space, Spin, Select } from 'antd'
+import { Button, message, Progress, Input, Card, Typography, Space, Spin } from 'antd'
 import { DownloadOutlined } from '@ant-design/icons'
 import { projectApi, bilibiliApi, VideoCategory, BilibiliDownloadTask } from '../services/api'
 import { useProjectStore } from '../store/useProjectStore'
@@ -16,7 +16,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
   const [url, setUrl] = useState('')
   const [projectName, setProjectName] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
-  const [selectedBrowser, setSelectedBrowser] = useState<string>('')
+  const [cookiesContent, setCookiesContent] = useState<string>('')
   const [categories, setCategories] = useState<VideoCategory[]>([])
   const [loadingCategories, setLoadingCategories] = useState(false)
   const [downloading, setDownloading] = useState(false)
@@ -123,9 +123,9 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
     try {
       let response
       if (videoType === 'bilibili') {
-        response = await bilibiliApi.parseVideoInfo(url.trim(), selectedBrowser)
+        response = await bilibiliApi.parseVideoInfo(url.trim(), undefined)
       } else if (videoType === 'youtube') {
-        response = await bilibiliApi.parseYouTubeVideoInfo(url.trim(), selectedBrowser)
+        response = await bilibiliApi.parseYouTubeVideoInfo(url.trim(), cookiesContent, undefined)
       }
 
       if (!response) {
@@ -219,8 +219,8 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
         requestBody.project_name = projectName.trim()
       }
       
-      if (selectedBrowser) {
-        requestBody.browser = selectedBrowser
+      if (cookiesContent) {
+        requestBody.cookies_content = cookiesContent
       }
 
       let response
@@ -263,9 +263,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
     setCurrentTask(null)
     setVideoInfo(null)
     setError('')
-    // Keep category and browser selection for convenience when adding more projects
-    // setSelectedCategory(categories[0].value)
-    // setSelectedBrowser('')
+    // setCookiesContent('') // Keep cookies for convenience when adding more projects
   }
 
   const stopDownload = () => {
@@ -346,37 +344,42 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
           </div>
           
           <div>
-            <Text style={{ color: '#ffffff', marginBottom: '12px', display: 'block', fontSize: '16px', fontWeight: 500 }}>Browser Selection (Bypass Bot Detection)</Text>
-            <Select
-              placeholder="If download fails or asks to sign in, select your browser to use cookies"
-              value={selectedBrowser || undefined}
-              onChange={(value) => {
-                setSelectedBrowser(value || '')
-                // If there's a valid URL that previously failed, we can re-trigger parse
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '12px' }}>
+              <Text style={{ color: '#ffffff', display: 'block', fontSize: '16px', fontWeight: 500 }}>YouTube Cookies (Bypass Bot Detection)</Text>
+              <a 
+                href="https://chromewebstore.google.com/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpocgfimmflef" 
+                target="_blank" 
+                rel="noreferrer"
+                style={{ color: '#4facfe', fontSize: '12px' }}
+              >
+                Get cookies.txt extension
+              </a>
+            </div>
+            
+            <Input.TextArea
+              placeholder="If the download fails because YouTube detects a bot, use the 'Get cookies.txt LOCALLY' extension on Chrome and paste the contents here..."
+              value={cookiesContent}
+              onChange={(e) => {
+                setCookiesContent(e.target.value)
                 if (url.trim() && !videoInfo && validateVideoUrl(url.trim())) {
-                  // We use setTimeout because state update is async, but wait, parseVideoInfo uses the state selectedBrowser... We need a ref or pass it.
-                  // Actually, they can just click the URL box again. To be clean, we don't auto-reparse here to avoid race condition with state.
+                  // User can retry by clicking the URL box
                 }
               }}
-              allowClear
               style={{
-                width: '100%',
-                height: '48px'
-              }}
-              dropdownStyle={{
-                background: 'rgba(38, 38, 38, 0.95)',
+                background: 'rgba(38, 38, 38, 0.8)',
                 border: '1px solid rgba(79, 172, 254, 0.3)',
-                borderRadius: '12px'
+                borderRadius: '12px',
+                color: '#ffffff',
+                fontSize: '12px',
+                fontFamily: 'monospace',
+                whiteSpace: 'pre',
+                resize: 'vertical'
               }}
+              rows={4}
               disabled={downloading}
-            >
-              <Select.Option value="chrome">Chrome</Select.Option>
-              <Select.Option value="firefox">Firefox</Select.Option>
-              <Select.Option value="safari">Safari</Select.Option>
-              <Select.Option value="edge">Edge</Select.Option>
-            </Select>
+            />
             <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px', marginTop: '8px', display: 'block' }}>
-              Selecting a browser provides login cookies to bypass YouTube "Bot Detection". Make sure you are logged into YouTube on that browser.
+              Pasting your YouTube cookies allows the server to skip bot checks. Make sure you are logged into YouTube in your browser when exporting cookies.
             </Text>
           </div>
           

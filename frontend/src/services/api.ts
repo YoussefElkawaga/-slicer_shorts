@@ -103,6 +103,7 @@ export interface BilibiliDownloadRequest {
   project_name: string
   video_category?: string
   browser?: string
+  cookies_content?: string
   shorts_duration_preset?: string
 }
 
@@ -489,9 +490,12 @@ export const bilibiliApi = {
   },
 
   // Parse YouTube video info
-  parseYouTubeVideoInfo: async (url: string, browser?: string): Promise<{success: boolean, video_info: BilibiliVideoInfo}> => {
+  parseYouTubeVideoInfo: async (url: string, cookies_content?: string, browser?: string): Promise<{success: boolean, video_info: BilibiliVideoInfo}> => {
     const formData = new FormData()
     formData.append('url', url)
+    if (cookies_content) {
+      formData.append('cookies_content', cookies_content)
+    }
     if (browser) {
       formData.append('browser', browser)
     }
