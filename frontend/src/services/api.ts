@@ -390,11 +390,13 @@ export const projectApi = {
     }
     
     try {
+      const token = localStorage.getItem('teamToken');
       // For blob-type responses, use axios directly instead of going through interceptors
       const response = await axios.get(`/api/v1${url}`, { 
         responseType: 'blob',
         headers: {
-          'Accept': 'application/octet-stream'
+          'Accept': 'application/octet-stream',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         }
       })
       
@@ -440,24 +442,28 @@ export const projectApi = {
 
   // Get project file URL
   getProjectFileUrl: (projectId: string, filename: string): string => {
-    return `${api.defaults.baseURL}/projects/${projectId}/files/${filename}`
+    const token = localStorage.getItem('teamToken');
+    return `${api.defaults.baseURL}/projects/${projectId}/files/${filename}${token ? `?token=${token}` : ''}`
   },
 
   // Get project video URL
   getProjectVideoUrl: (projectId: string): string => {
-    return `${api.defaults.baseURL}/projects/${projectId}/video`
+    const token = localStorage.getItem('teamToken');
+    return `${api.defaults.baseURL}/projects/${projectId}/video${token ? `?token=${token}` : ''}`
   },
 
   // Get clip video URL
   getClipVideoUrl: (projectId: string, clipId: string, _clipTitle?: string): string => {
+    const token = localStorage.getItem('teamToken');
     // Use projects route to get clip video
-    return `/api/v1/projects/${projectId}/clips/${clipId}`
+    return `/api/v1/projects/${projectId}/clips/${clipId}${token ? `?token=${token}` : ''}`
   },
 
   // Get collection video URL
   getCollectionVideoUrl: (projectId: string, collectionId: string): string => {
+    const token = localStorage.getItem('teamToken');
     // Use files route to get collection video
-    return `/api/v1/files/projects/${projectId}/collections/${collectionId}`
+    return `/api/v1/files/projects/${projectId}/collections/${collectionId}${token ? `?token=${token}` : ''}`
   },
 
   // Generate project thumbnail
