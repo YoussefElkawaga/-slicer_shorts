@@ -27,7 +27,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
   const [error, setError] = useState('')
   const [selectedDurationPreset, setSelectedDurationPreset] = useState<string>('short')
   
-  const { addProject } = useProjectStore()
+  const {} = useProjectStore()
 
   // Load video category config
   useEffect(() => {
@@ -144,7 +144,12 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
       
       return parsedVideoInfo
     } catch (error: any) {
-      setError('Please enter a valid video URL')
+      const errorMessage = error.response?.data?.detail || error.message || 'Please enter a valid video URL';
+      if (typeof errorMessage === 'string' && (errorMessage.includes('Sign in to confirm') || errorMessage.includes('bot'))) {
+        setError('YouTube bot detection active: Please select a browser from the "Browser Selection" menu below to use cookies, then click the URL box and hit "Enter" or click outside to retry.')
+      } else {
+        setError(errorMessage.length > 200 ? errorMessage.substring(0, 200) + '...' : errorMessage)
+      }
       setVideoInfo(null)
     } finally {
       setParsing(false)
@@ -340,6 +345,41 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
              )}
           </div>
           
+          <div>
+            <Text style={{ color: '#ffffff', marginBottom: '12px', display: 'block', fontSize: '16px', fontWeight: 500 }}>Browser Selection (Bypass Bot Detection)</Text>
+            <Select
+              placeholder="If download fails or asks to sign in, select your browser to use cookies"
+              value={selectedBrowser || undefined}
+              onChange={(value) => {
+                setSelectedBrowser(value || '')
+                // If there's a valid URL that previously failed, we can re-trigger parse
+                if (url.trim() && !videoInfo && validateVideoUrl(url.trim())) {
+                  // We use setTimeout because state update is async, but wait, parseVideoInfo uses the state selectedBrowser... We need a ref or pass it.
+                  // Actually, they can just click the URL box again. To be clean, we don't auto-reparse here to avoid race condition with state.
+                }
+              }}
+              allowClear
+              style={{
+                width: '100%',
+                height: '48px'
+              }}
+              dropdownStyle={{
+                background: 'rgba(38, 38, 38, 0.95)',
+                border: '1px solid rgba(79, 172, 254, 0.3)',
+                borderRadius: '12px'
+              }}
+              disabled={downloading}
+            >
+              <Select.Option value="chrome">Chrome</Select.Option>
+              <Select.Option value="firefox">Firefox</Select.Option>
+              <Select.Option value="safari">Safari</Select.Option>
+              <Select.Option value="edge">Edge</Select.Option>
+            </Select>
+            <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px', marginTop: '8px', display: 'block' }}>
+              Selecting a browser provides login cookies to bypass YouTube "Bot Detection". Make sure you are logged into YouTube on that browser.
+            </Text>
+          </div>
+          
           {/* Show parsed video info on success */}
           {videoInfo && (
             <div style={{
@@ -380,34 +420,6 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
                   }}
                   disabled={downloading}
                 />
-              </div>
-              
-              <div>
-                <Text style={{ color: '#ffffff', marginBottom: '12px', display: 'block', fontSize: '16px', fontWeight: 500 }}>Browser Selection (needed for AI subtitles)</Text>
-                <Select
-                  placeholder="Select browser for cookies (optional)"
-                  value={selectedBrowser || undefined}
-                  onChange={(value) => setSelectedBrowser(value || '')}
-                  allowClear
-                  style={{
-                    width: '100%',
-                    height: '48px'
-                  }}
-                  dropdownStyle={{
-                    background: 'rgba(38, 38, 38, 0.95)',
-                    border: '1px solid rgba(79, 172, 254, 0.3)',
-                    borderRadius: '12px'
-                  }}
-                  disabled={downloading}
-                >
-                  <Select.Option value="chrome">Chrome</Select.Option>
-                  <Select.Option value="firefox">Firefox</Select.Option>
-                  <Select.Option value="safari">Safari</Select.Option>
-                  <Select.Option value="edge">Edge</Select.Option>
-                </Select>
-                <Text style={{ color: 'rgba(255, 255, 255, 0.6)', fontSize: '12px', marginTop: '8px', display: 'block' }}>
-                  Selecting a browser provides login cookies for downloading AI subtitles. Without it, only public subtitles are available.
-                </Text>
               </div>
               
               <div>

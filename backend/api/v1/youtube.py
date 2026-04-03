@@ -104,8 +104,11 @@ async def parse_youtube_video(
         }
         
     except Exception as e:
-        logger.error(f"解析YouTube视频失败: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"解析失败: {str(e)}")
+        error_msg = str(e)
+        import re
+        error_msg = re.sub(r'\x1b\[[0-9;]*m', '', error_msg)
+        logger.error(f"解析YouTube视频失败: {error_msg}")
+        raise HTTPException(status_code=500, detail=f"解析失败: {error_msg}")
 
 @router.post("/download")
 async def create_youtube_download_task(request: YouTubeDownloadRequest):
