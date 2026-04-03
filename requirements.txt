@@ -12,6 +12,7 @@ requests
 aiohttp
 aiofiles
 python-jose[cryptography]
+PyJWT
 passlib[bcrypt]
 pytest
 pytest-cov
