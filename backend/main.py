@@ -100,7 +100,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Include auth router before unified api routes so it is public
+# Include auth and health routers before unified api routes so they are public
+from backend.api.v1.health import router as health_router
+app.include_router(health_router, prefix="/api/v1/health", tags=["health"])
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 
 # Include unified API routes (Fully Protected by Team JWT)

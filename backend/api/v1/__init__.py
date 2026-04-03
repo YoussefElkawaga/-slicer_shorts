@@ -31,8 +31,7 @@ from ..upload_queue import router as upload_queue_router
 from ..account_health import router as account_health_router
 from .shorts import router as shorts_router
 
-# 注册所有路由
-api_router.include_router(health_router, prefix="/health", tags=["health"])
+# 注册所有路由 (Health router is now mounted directly in main.py)
 api_router.include_router(projects_router, prefix="/projects", tags=["projects"])
 api_router.include_router(clips_router, prefix="/clips", tags=["clips"])
 api_router.include_router(collections_router, prefix="/collections", tags=["collections"])
