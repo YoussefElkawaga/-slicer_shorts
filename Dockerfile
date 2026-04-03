@@ -62,6 +62,7 @@ ENV PYTHONPATH=/app
 RUN apt-get update && apt-get install -y \
     ffmpeg \
     curl \
+    dos2unix \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
@@ -83,7 +84,8 @@ COPY docker-entrypoint.sh ./
 # 创建必要的目录
 RUN mkdir -p data/projects data/uploads data/temp data/output logs
 
-# 设置权限
+# 设置权限和换行符
+RUN dos2unix *.sh docker-entrypoint.sh
 RUN chmod +x *.sh
 RUN chmod +x docker-entrypoint.sh
 RUN chmod -R 755 data logs
