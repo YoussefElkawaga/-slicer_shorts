@@ -23,8 +23,7 @@ services:
     container_name: autoclip-app
     restart: unless-stopped
     ports:
-      - "8000:8000"  # 后端API
-      - "3000:3000"  # 前端界面
+      - "8000:8000"  # 后端API和前端界面
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs

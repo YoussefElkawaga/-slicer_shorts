@@ -4,7 +4,7 @@ import { Project, Clip, Collection } from '../store/useProjectStore'
 // Format time function (unused, kept as reserve)
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api/v1', // FastAPI backend server address
+  baseURL: '/api/v1', // FastAPI backend server address
   timeout: 300000, // Increased to 5-minute timeout
   headers: {
     'Content-Type': 'application/json',
@@ -391,7 +391,7 @@ export const projectApi = {
     
     try {
       // For blob-type responses, use axios directly instead of going through interceptors
-      const response = await axios.get(`http://localhost:8000/api/v1${url}`, { 
+      const response = await axios.get(`/api/v1${url}`, { 
         responseType: 'blob',
         headers: {
           'Accept': 'application/octet-stream'
@@ -451,13 +451,13 @@ export const projectApi = {
   // Get clip video URL
   getClipVideoUrl: (projectId: string, clipId: string, _clipTitle?: string): string => {
     // Use projects route to get clip video
-    return `http://localhost:8000/api/v1/projects/${projectId}/clips/${clipId}`
+    return `/api/v1/projects/${projectId}/clips/${clipId}`
   },
 
   // Get collection video URL
   getCollectionVideoUrl: (projectId: string, collectionId: string): string => {
     // Use files route to get collection video
-    return `http://localhost:8000/api/v1/files/projects/${projectId}/collections/${collectionId}`
+    return `/api/v1/files/projects/${projectId}/collections/${collectionId}`
   },
 
   // Generate project thumbnail

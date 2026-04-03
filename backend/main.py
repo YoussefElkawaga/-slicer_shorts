@@ -3,7 +3,9 @@
 import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+import os
 
 # 导入配置管理
 from .core.config import settings, get_logging_config, get_api_key
@@ -167,6 +169,42 @@ from .core.error_middleware import global_exception_handler
 
 # 注册全局异常处理器
 app.add_exception_handler(Exception, global_exception_handler)
+
+# 挂载前端静态文件 (Production Mode SPA Support)
+# We handle this at the very end so it acts as a catch-all after API routes
+import os
+frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")
+# Inside docker the path is /app/frontend/dist. If running locally it's ../frontend/dist
+if not os.path.exists(frontend_dist) and os.path.exists("/app/frontend/dist"):
+    frontend_dist = "/app/frontend/dist"
+
+if os.path.exists(frontend_dist):
+    logger.info(f"开启前端静态文件服务: {frontend_dist}")
+    
+    # Mount assets directory directly
+    assets_dir = os.path.join(frontend_dist, "assets")
+    if os.path.exists(assets_dir):
+        app.mount("/assets", StaticFiles(directory=assets_dir), name="assets")
+        
+    @app.get("/{catchall:path}")
+    async def serve_spa(catchall: str):
+        if catchall.startswith("api/"):
+            # Avoid catching API 404s
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Not Found")
+            
+        file_path = os.path.join(frontend_dist, catchall)
+        if os.path.isfile(file_path):
+            return FileResponse(file_path)
+        
+        index_file = os.path.join(frontend_dist, "index.html")
+        if os.path.isfile(index_file):
+            return FileResponse(index_file)
+            
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Frontend not built")
+else:
+    logger.warning(f"前端静态文件目录不存在: {frontend_dist}，SPA支持已禁用")
 
 if __name__ == "__main__":
     import uvicorn
