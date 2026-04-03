@@ -78,11 +78,6 @@ async def parse_youtube_video(
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['ios', 'android', 'web']
-                }
-            }
         }
         
         cookie_file_path = None
@@ -95,6 +90,12 @@ async def parse_youtube_video(
             ydl_opts['cookiefile'] = cookie_file_path
         elif browser:
             ydl_opts['cookiesfrombrowser'] = (browser.lower(),)
+        else:
+            ydl_opts['extractor_args'] = {
+                'youtube': {
+                    'player_client': ['ios', 'android', 'web']
+                }
+            }
         
         def extract_info_sync(url, ydl_opts):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -147,11 +148,6 @@ async def create_youtube_download_task(request: YouTubeDownloadRequest):
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['ios', 'android', 'web']
-                }
-            }
         }
         
         cookie_file_path = None
@@ -164,6 +160,12 @@ async def create_youtube_download_task(request: YouTubeDownloadRequest):
             ydl_opts['cookiefile'] = cookie_file_path
         elif request.browser:
             ydl_opts['cookiesfrombrowser'] = (request.browser.lower(),)
+        else:
+            ydl_opts['extractor_args'] = {
+                'youtube': {
+                    'player_client': ['ios', 'android', 'web']
+                }
+            }
         
         def extract_info_sync(url, ydl_opts):
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -394,11 +396,6 @@ async def process_youtube_download_task(task_id: str, request: YouTubeDownloadRe
                 'key': 'FFmpegVideoConvertor',
                 'preferedformat': 'mp4',
             }],
-            'extractor_args': {
-                'youtube': {
-                    'player_client': ['ios', 'android', 'web']
-                }
-            }
         }
         
         cookie_file_path = None
@@ -411,6 +408,12 @@ async def process_youtube_download_task(task_id: str, request: YouTubeDownloadRe
             ydl_opts['cookiefile'] = cookie_file_path
         elif request.browser:
             ydl_opts['cookiesfrombrowser'] = (request.browser.lower(),)
+        else:
+            ydl_opts['extractor_args'] = {
+                'youtube': {
+                    'player_client': ['ios', 'android', 'web']
+                }
+            }
         
         # Progress tracking callback
         progress_state = {'last_pct': 30.0}
