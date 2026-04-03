@@ -78,6 +78,11 @@ async def parse_youtube_video(
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'android', 'web']
+                }
+            }
         }
         
         cookie_file_path = None
@@ -142,6 +147,11 @@ async def create_youtube_download_task(request: YouTubeDownloadRequest):
         ydl_opts = {
             'quiet': True,
             'no_warnings': True,
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'android', 'web']
+                }
+            }
         }
         
         cookie_file_path = None
@@ -384,6 +394,11 @@ async def process_youtube_download_task(task_id: str, request: YouTubeDownloadRe
                 'key': 'FFmpegVideoConvertor',
                 'preferedformat': 'mp4',
             }],
+            'extractor_args': {
+                'youtube': {
+                    'player_client': ['ios', 'android', 'web']
+                }
+            }
         }
         
         cookie_file_path = None
