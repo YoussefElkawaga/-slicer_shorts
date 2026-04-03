@@ -1,0 +1,11 @@
+{
+  "llm_provider": "openrouter",
+  "dashscope_api_key": "sk-1280fee632a541c1a69d3873f850358b",
+  "blazeai_api_key": "sk-blaze-6uf0l8lZozSVY7ZQAjTbcMZORGUMHp1C47d5SALRlWoEoG8B",
+  "openrouter_api_key": "",
+  "groq_api_key": "",
+  "model_name": "qwen/qwen3.6-plus:free",
+  "chunk_size": 5000,
+  "min_score_threshold": 0.7,
+  "max_clips_per_collection": 5
+}
