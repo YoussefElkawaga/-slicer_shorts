@@ -146,7 +146,7 @@ const BilibiliDownload: React.FC<BilibiliDownloadProps> = ({ onDownloadSuccess }
     } catch (error: any) {
       const errorMessage = error.response?.data?.detail || error.message || 'Please enter a valid video URL';
       if (typeof errorMessage === 'string' && (errorMessage.includes('Sign in to confirm') || errorMessage.includes('bot'))) {
-        setError('YouTube bot detection active: Please select a browser from the "Browser Selection" menu below to use cookies, then click the URL box and hit "Enter" or click outside to retry.')
+        setError('YouTube bot detection active: Please paste your YouTube cookies in the "YouTube Cookies" text area below, then click the URL box and hit "Enter" or click outside to retry.')
       } else {
         setError(errorMessage.length > 200 ? errorMessage.substring(0, 200) + '...' : errorMessage)
       }
