@@ -57,9 +57,7 @@ ENV PYTHONUNBUFFERED=1
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONPATH=/app
 
-# 创建非root用户
-RUN groupadd -r autoclip && useradd -r -g autoclip autoclip
-
+# Removed autoclip user for host bind mount permission compatibility
 # 安装运行时依赖
 RUN apt-get update && apt-get install -y \
     ffmpeg \
@@ -86,14 +84,11 @@ COPY docker-entrypoint.sh ./
 RUN mkdir -p data/projects data/uploads data/temp data/output logs
 
 # 设置权限
-RUN chown -R autoclip:autoclip /app
 RUN chmod +x *.sh
 RUN chmod +x docker-entrypoint.sh
 RUN chmod -R 755 data logs
 
-# 切换到非root用户
-USER autoclip
-
+# Container runs as root to maintain permission synchronicity with host bind mounts
 # 暴露端口
 EXPOSE 8000 3000
 
