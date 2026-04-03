@@ -28,6 +28,8 @@ services:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./uploads:/app/uploads
+    env_file:
+      - .env
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=sqlite:///./data/autoclip.db
@@ -55,6 +57,8 @@ services:
       - ./data:/app/data
       - ./logs:/app/logs
       - ./uploads:/app/uploads
+    env_file:
+      - .env
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=sqlite:///./data/autoclip.db
@@ -78,6 +82,8 @@ services:
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
+    env_file:
+      - .env
     environment:
       - REDIS_URL=redis://redis:6379/0
       - DATABASE_URL=sqlite:///./data/autoclip.db

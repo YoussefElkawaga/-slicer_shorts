@@ -230,6 +230,7 @@ async def get_projects(
         
         return project_service.get_projects_paginated(pagination, filters)
     except Exception as e:
+        logger.error(f"Failed to get projects: {e}", exc_info=True)
         raise HTTPException(status_code=400, detail=str(e))
 
 

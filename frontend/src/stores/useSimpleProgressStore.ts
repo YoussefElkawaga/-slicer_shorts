@@ -71,7 +71,10 @@ export const useSimpleProgressStore = create<SimpleProgressState>((set, get) => 
       const fetchSnapshots = async () => {
         try {
           const queryString = projectIds.map(id => `project_ids=${id}`).join('&')
-          const response = await fetch(`/api/v1/simple-progress/snapshot?${queryString}`)
+          const token = localStorage.getItem('teamToken')
+          const response = await fetch(`/api/v1/simple-progress/snapshot?${queryString}`, {
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          })
           
           if (!response.ok) {
             throw new Error(`HTTP ${response.status}: ${response.statusText}`)
