@@ -24,7 +24,7 @@ import axios from 'axios'
 
 const { Text, Title } = Typography
 
-const API_BASE = 'http://localhost:8000/api/v1/shorts'
+const API_BASE = '/api/v1/shorts'
 
 interface ClipResult {
   clip_number: number

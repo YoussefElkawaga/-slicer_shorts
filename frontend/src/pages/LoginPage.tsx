@@ -24,8 +24,7 @@ const LoginPage: React.FC = () => {
     try {
       // In a production setup, this should hit an API.
       // For now, we are hitting the /api/v1/auth/login endpoint
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const response = await fetch(`${API_URL}/api/v1/auth/login`, {
+      const response = await fetch(`/api/v1/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
