@@ -7,6 +7,7 @@ import json
 from typing import Dict, Any, Optional, Callable
 from pathlib import Path
 
+import asyncio
 from backend.services.simple_progress import emit_progress, clear_progress
 from backend.pipeline.step1_outline import run_step1_outline
 from backend.pipeline.step2_timeline import run_step2_timeline
@@ -182,14 +183,14 @@ class SimplePipelineAdapter:
             logger.info("执行Step 1: 大纲提取")
             if input_srt_path and Path(input_srt_path).exists():
                 logger.info(f"使用现有SRT文件: {input_srt_path}")
-                outlines = run_step1_outline(Path(input_srt_path), metadata_dir=metadata_dir)
+                outlines = await asyncio.to_thread(run_step1_outline, Path(input_srt_path), metadata_dir=metadata_dir)
             else:
                 logger.warning("没有SRT文件，尝试自动生成字幕")
                 # 尝试自动生成字幕
                 srt_path = await self._generate_subtitle_automatically(input_video_path, metadata_dir)
                 if srt_path and srt_path.exists():
                     logger.info(f"自动生成字幕成功: {srt_path}")
-                    outlines = run_step1_outline(srt_path, metadata_dir=metadata_dir)
+                    outlines = await asyncio.to_thread(run_step1_outline, srt_path, metadata_dir=metadata_dir)
                 else:
                     logger.warning("自动生成字幕失败，创建空大纲")
                     # 创建一个空的大纲文件
@@ -205,7 +206,8 @@ class SimplePipelineAdapter:
             # Step 2: 时间线提取
             logger.info("执行Step 2: 时间线提取")
             if outlines:  # 只有当有大纲时才执行后续步骤
-                timeline_data = run_step2_timeline(
+                timeline_data = await asyncio.to_thread(
+                    run_step2_timeline,
                     metadata_dir / "step1_outline.json",
                     metadata_dir=metadata_dir
                 )
@@ -213,7 +215,8 @@ class SimplePipelineAdapter:
                 
                 # Step 3: 内容评分
                 logger.info("执行Step 3: 内容评分")
-                scored_clips = run_step3_scoring(
+                scored_clips = await asyncio.to_thread(
+                    run_step3_scoring,
                     metadata_dir / "step2_timeline.json",
                     metadata_dir=metadata_dir
                 )
@@ -304,7 +307,8 @@ class SimplePipelineAdapter:
             # Step 4: 标题生成
             logger.info("执行Step 4: 标题生成")
             if outlines:  # 只有当有大纲时才执行后续步骤
-                titled_clips = run_step4_title(
+                titled_clips = await asyncio.to_thread(
+                    run_step4_title,
                     metadata_dir / "step3_high_score_clips.json",
                     metadata_dir=str(metadata_dir)
                 )
@@ -312,7 +316,8 @@ class SimplePipelineAdapter:
                 
                 # Step 5: 主题聚类
                 logger.info("执行Step 5: 主题聚类")
-                collections = run_step5_clustering(
+                collections = await asyncio.to_thread(
+                    run_step5_clustering,
                     metadata_dir / "step4_titles.json",
                     metadata_dir=str(metadata_dir)
                 )
@@ -323,7 +328,8 @@ class SimplePipelineAdapter:
                 
                 # Step 6: 视频切割
                 logger.info("执行Step 6: 视频切割")
-                video_result = run_step6_video(
+                video_result = await asyncio.to_thread(
+                    run_step6_video,
                     metadata_dir / "step4_titles.json",
                     metadata_dir / "step5_collections.json",
                     input_video_path,
@@ -360,7 +366,10 @@ class SimplePipelineAdapter:
                 db = SessionLocal()
                 try:
                     sync_service = DataSyncService(db)
-                    sync_result = sync_service.sync_project_from_filesystem(self.project_id, project_dir)
+                    sync_result = await asyncio.to_thread(
+                        sync_service.sync_project_from_filesystem,
+                        self.project_id, project_dir
+                    )
                     if sync_result.get("success"):
                         logger.info(f"项目 {self.project_id} 数据同步成功: {sync_result}")
                     else:

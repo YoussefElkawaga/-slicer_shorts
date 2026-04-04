@@ -113,9 +113,11 @@ class AutoPipelineService:
                 # Try Celery first, fall back to async if Redis is unavailable
                 celery_available = False
                 try:
+                    import os
                     import redis as redis_lib
-                    r = redis_lib.Redis(
-                        host='localhost', port=6379, db=0,
+                    redis_url = os.getenv('REDIS_URL', 'redis://redis:6379/0')
+                    r = redis_lib.Redis.from_url(
+                        redis_url,
                         socket_connect_timeout=1,
                         socket_timeout=1,
                         retry_on_timeout=False
