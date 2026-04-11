@@ -97,6 +97,7 @@ class LLMManager:
             ProviderType.GROQ: "groq_api_key",
             ProviderType.BLAZEAI: "blazeai_api_key",
             ProviderType.OPENROUTER: "openrouter_api_key",
+            ProviderType.COMPLETIONSME: "completionsme_api_key",
         }
         
         # Environment variable fallback mapping
@@ -108,6 +109,7 @@ class LLMManager:
             ProviderType.GROQ: "GROQ_API_KEY",
             ProviderType.BLAZEAI: "BLAZEAI_API_KEY",
             ProviderType.OPENROUTER: "OPENROUTER_API_KEY",
+            ProviderType.COMPLETIONSME: "COMPLETIONSME_API_KEY",
         }
         
         # 1. Try settings.json first
@@ -151,6 +153,7 @@ class LLMManager:
                 ProviderType.GROQ: "groq_api_key",
                 ProviderType.BLAZEAI: "blazeai_api_key",
                 ProviderType.OPENROUTER: "openrouter_api_key",
+                ProviderType.COMPLETIONSME: "completionsme_api_key",
             }
             
             key_name = key_mapping.get(provider_type)
@@ -183,69 +186,129 @@ class LLMManager:
             raise
     
     def call_with_retry(self, prompt: str, input_data: Any = None, max_retries: int = 3, **kwargs) -> str:
-        """带重试机制的LLM调用 — rate-limit aware with exponential backoff + BlazeAI fallback"""
+        """
+        BULLETPROOF LLM call — loops through ALL providers and models INFINITELY until success.
+        
+        Order:
+        1. Primary configured provider (with retries + exponential backoff)
+        2. BlazeAI fallback models
+        3. Free OpenRouter models (auto-rotation)
+        4. Completions.me models (17 premium models — ultimate fallback)
+        5. If ALL fail → wait 30s → LOOP BACK to step 1 → repeat forever
+        
+        This method NEVER raises an exception. It will keep trying until it succeeds.
+        """
         import time
+        from .llm_providers import CompletionsMeProvider
         
-        # --- Try primary provider with retries ---
-        last_error = None
-        for attempt in range(max_retries):
-            try:
-                return self.call(prompt, input_data, **kwargs)
-            except ValueError:  # API Key or parameter error — don't retry
-                raise
-            except Exception as e:
-                last_error = e
-                error_str = str(e)
-                is_rate_limit = '429' in error_str or 'Too Many Requests' in error_str
+        round_number = 0
+        
+        while True:  # Infinite outer loop — NEVER give up
+            round_number += 1
+            logger.info(f"=== LLM Call Round #{round_number} ===")
+            
+            # ---------------------------------------------------------------
+            # STAGE 1: Try primary provider with retries
+            # ---------------------------------------------------------------
+            if self.current_provider:
+                for attempt in range(max_retries):
+                    try:
+                        result = self.call(prompt, input_data, **kwargs)
+                        if result and len(result.strip()) > 0:
+                            return result
+                        logger.warning(f"Primary provider returned empty response (attempt {attempt + 1})")
+                    except ValueError:
+                        # Config error (no API key etc) — skip to fallbacks immediately
+                        logger.warning("Primary provider config error, skipping to fallbacks")
+                        break
+                    except Exception as e:
+                        error_str = str(e)
+                        is_rate_limit = '429' in error_str or 'Too Many Requests' in error_str or 'rate' in error_str.lower()
+                        
+                        if is_rate_limit:
+                            delay = min(60, 15 * (attempt + 1))
+                            logger.warning(f"Primary rate-limited (attempt {attempt + 1}/{max_retries}), waiting {delay}s...")
+                        else:
+                            delay = min(30, 2 ** attempt)
+                            logger.warning(f"Primary failed (attempt {attempt + 1}/{max_retries}): {error_str[:200]}")
+                        
+                        if attempt < max_retries - 1:
+                            time.sleep(delay)
                 
-                if attempt == max_retries - 1:
-                    logger.error(f"LLM调用在{max_retries}次重试后失败，尝试备用提供商...")
-                    break
-                
-                # Use longer delays for rate limit errors
-                if is_rate_limit:
-                    delay = 30 * (attempt + 1)
-                    logger.warning(f"第{attempt + 1}次调用被限流，等待{delay}秒后重试...")
-                else:
-                    delay = 2 ** attempt
-                    logger.warning(f"第{attempt + 1}次调用失败，准备重试: {error_str}")
-                
-                time.sleep(delay)
-        
-        # --- Fallback to BlazeAI if primary provider failed ---
-        return self._call_with_fallback(prompt, input_data, last_error, **kwargs)
-    
-    def _call_with_fallback(self, prompt: str, input_data: Any = None, original_error: Exception = None, **kwargs) -> str:
-        """Fallback to BlazeAI provider with multiple model options"""
-        blazeai_api_key = self._get_api_key_for_provider(ProviderType.BLAZEAI)
-        if not blazeai_api_key:
-            # No BlazeAI key available — raise the original error
-            logger.error("No BlazeAI API key configured for fallback")
-            if original_error:
-                raise original_error
-            raise ValueError("Primary provider failed and no fallback configured")
-        
-        # Models to try in order
-        fallback_models = ["openai/gpt-5.1", "grok/grok-4.1-mini"]
-        
-        for model_name in fallback_models:
-            try:
-                logger.info(f"Trying fallback: BlazeAI with {model_name}")
-                fallback_provider = LLMProviderFactory.create_provider(
-                    ProviderType.BLAZEAI, blazeai_api_key, model_name
-                )
-                response = fallback_provider.call(prompt, input_data, **kwargs)
-                logger.info(f"Fallback succeeded with BlazeAI/{model_name}")
-                return response.content
-            except Exception as e:
-                logger.warning(f"Fallback BlazeAI/{model_name} failed: {e}")
-                continue
-        
-        # All fallbacks exhausted
-        logger.error("All fallback models exhausted")
-        if original_error:
-            raise original_error
-        raise RuntimeError("All LLM providers and fallback models failed")
+                logger.info("Primary provider exhausted, moving to fallbacks...")
+            
+            # ---------------------------------------------------------------
+            # STAGE 2: BlazeAI fallback models
+            # ---------------------------------------------------------------
+            blazeai_api_key = self._get_api_key_for_provider(ProviderType.BLAZEAI)
+            if blazeai_api_key:
+                blazeai_models = ["openai/gpt-5.1", "grok/grok-4.1-mini", "anthropic/claude-sonnet-4-6"]
+                for model_name in blazeai_models:
+                    try:
+                        logger.info(f"Trying BlazeAI fallback: {model_name}")
+                        provider = LLMProviderFactory.create_provider(
+                            ProviderType.BLAZEAI, blazeai_api_key, model_name
+                        )
+                        response = provider.call(prompt, input_data, **kwargs)
+                        if response.content and len(response.content.strip()) > 0:
+                            logger.info(f"✅ BlazeAI/{model_name} succeeded!")
+                            return response.content
+                    except Exception as e:
+                        logger.warning(f"BlazeAI/{model_name} failed: {str(e)[:150]}")
+                        time.sleep(2)
+            
+            # ---------------------------------------------------------------
+            # STAGE 3: Free OpenRouter models (no API key needed for :free)
+            # ---------------------------------------------------------------
+            openrouter_key = self._get_api_key_for_provider(ProviderType.OPENROUTER) or ""
+            free_openrouter_models = [
+                "qwen/qwen3.6-plus:free",
+                "google/gemma-4-31b-it:free",
+                "meta-llama/llama-3.3-70b-instruct:free",
+                "deepseek/deepseek-r1:free",
+                "nvidia/llama-3.1-nemotron-ultra-253b-v1:free",
+                "qwen/qwen-2.5-coder-32b-instruct:free",
+                "stepfun/step-3.5-flash:free",
+                "google/gemini-2.5-pro-exp-03-25:free",
+            ]
+            for model_name in free_openrouter_models:
+                try:
+                    logger.info(f"Trying OpenRouter fallback: {model_name}")
+                    provider = LLMProviderFactory.create_provider(
+                        ProviderType.OPENROUTER, openrouter_key, model_name
+                    )
+                    response = provider.call(prompt, input_data, **kwargs)
+                    if response.content and len(response.content.strip()) > 0:
+                        logger.info(f"✅ OpenRouter/{model_name} succeeded!")
+                        return response.content
+                except Exception as e:
+                    logger.warning(f"OpenRouter/{model_name} failed: {str(e)[:150]}")
+                    time.sleep(3)
+            
+            # ---------------------------------------------------------------
+            # STAGE 4: Completions.me — 17 premium models (ultimate fallback)
+            # ---------------------------------------------------------------
+            for model_name in CompletionsMeProvider.ALL_MODELS:
+                try:
+                    logger.info(f"Trying completions.me fallback: {model_name}")
+                    provider = CompletionsMeProvider(model_name=model_name)
+                    response = provider.call(prompt, input_data, **kwargs)
+                    if response.content and len(response.content.strip()) > 0:
+                        logger.info(f"✅ completions.me/{model_name} succeeded!")
+                        return response.content
+                except Exception as e:
+                    logger.warning(f"completions.me/{model_name} failed: {str(e)[:150]}")
+                    time.sleep(2)
+            
+            # ---------------------------------------------------------------
+            # ALL providers exhausted this round — wait and try again
+            # ---------------------------------------------------------------
+            wait_time = min(60, 30 * round_number)
+            logger.warning(
+                f"⚠️ All {len(free_openrouter_models) + len(CompletionsMeProvider.ALL_MODELS) + 3} models failed in round #{round_number}. "
+                f"Waiting {wait_time}s before retrying ALL providers again..."
+            )
+            time.sleep(wait_time)
     
     def test_provider_connection(self, provider_type: ProviderType, api_key: str, model_name: str) -> bool:
         """测试提供商连接"""
@@ -280,7 +343,8 @@ class LLMManager:
             ProviderType.SILICONFLOW: "硅基流动",
             ProviderType.GROQ: "Groq",
             ProviderType.BLAZEAI: "BlazeAI (Claude)",
-            ProviderType.OPENROUTER: "OpenRouter"
+            ProviderType.OPENROUTER: "OpenRouter",
+            ProviderType.COMPLETIONSME: "Completions.me (Ultimate Fallback)"
         }
         return display_names.get(provider_type, provider_type.value)
     

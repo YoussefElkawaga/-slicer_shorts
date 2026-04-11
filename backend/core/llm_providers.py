@@ -22,6 +22,7 @@ class ProviderType(Enum):
     GROQ = "groq"            # Groq (fast inference)
     BLAZEAI = "blazeai"      # BlazeAI (Claude proxy)
     OPENROUTER = "openrouter"  # OpenRouter (multi-model)
+    COMPLETIONSME = "completionsme"  # completions.me (multi-model ultimate fallback)
 
 @dataclass
 class ModelInfo:
@@ -690,6 +691,101 @@ class OpenRouterProvider(LLMProvider):
         ]
 
 
+class CompletionsMeProvider(LLMProvider):
+    """Completions.me Provider — ultimate fallback with 17 premium models (Claude, GPT-5, Gemini, Grok)"""
+    
+    # Hardcoded API key for this service — it's the project's built-in fallback
+    BUILTIN_API_KEY = "sk-cp_6fa5041a494710e12a6f281eb873d780e2ee35b2f3a766e0"
+    
+    # All available models, ordered from smartest/biggest to smallest
+    ALL_MODELS = [
+        "claude-opus-4.6",
+        "gpt-5.2",
+        "claude-sonnet-4.6",
+        "claude-opus-4.5",
+        "gpt-5.1",
+        "gemini-3.1-pro-preview",
+        "claude-sonnet-4.5",
+        "gpt-5-mini",
+        "claude-sonnet-4",
+        "gemini-3-pro-preview",
+        "gemini-3-flash-preview",
+        "gemini-2.5-pro",
+        "gpt-4.1",
+        "gpt-4o",
+        "claude-haiku-4.5",
+        "grok-code-fast-1",
+        "oswe-vscode-prime",
+    ]
+    
+    def __init__(self, api_key: str = None, model_name: str = "gpt-5.2", **kwargs):
+        # Always use the built-in API key
+        super().__init__(api_key or self.BUILTIN_API_KEY, model_name, **kwargs)
+        self.base_url = "https://www.completions.me/api/v1"
+    
+    def call(self, prompt: str, input_data: Any = None, **kwargs) -> LLMResponse:
+        """Call Completions.me API"""
+        try:
+            import openai
+            
+            client = openai.OpenAI(
+                base_url=self.base_url,
+                api_key=self.api_key,
+                timeout=300,  # 5 minute timeout per request
+            )
+            
+            full_input = self._build_full_input(prompt, input_data)
+            
+            response = client.chat.completions.create(
+                model=self.model_name,
+                messages=[{"role": "user", "content": full_input}],
+                temperature=kwargs.get("temperature", 0.3),
+                max_tokens=kwargs.get("max_tokens", 8192),
+            )
+            
+            content = response.choices[0].message.content
+            usage = None
+            if response.usage:
+                usage = {
+                    "prompt_tokens": response.usage.prompt_tokens,
+                    "completion_tokens": response.usage.completion_tokens,
+                    "total_tokens": response.usage.total_tokens
+                }
+            
+            return LLMResponse(
+                content=content,
+                usage=usage,
+                model=self.model_name,
+                finish_reason=response.choices[0].finish_reason
+            )
+            
+        except Exception as e:
+            logger.error(f"Completions.me call failed (model={self.model_name}): {str(e)}")
+            raise
+    
+    def test_connection(self) -> bool:
+        """Test Completions.me connection"""
+        try:
+            response = self.call("Reply with exactly: test success")
+            return len(response.content) > 0
+        except Exception as e:
+            logger.error(f"Completions.me connection test failed: {e}")
+            return False
+    
+    def get_available_models(self) -> List[ModelInfo]:
+        """Get available Completions.me models"""
+        models = []
+        for model_name in self.ALL_MODELS:
+            models.append(ModelInfo(
+                name=model_name,
+                display_name=f"{model_name} (completions.me)",
+                provider=ProviderType.COMPLETIONSME,
+                max_tokens=128000,
+                description=f"{model_name} via completions.me (fallback)"
+            ))
+        return models
+
+
 class LLMProviderFactory:
     """LLM提供商工厂"""
     
@@ -701,6 +797,7 @@ class LLMProviderFactory:
         ProviderType.GROQ: GroqLLMProvider,
         ProviderType.BLAZEAI: BlazeAIProvider,
         ProviderType.OPENROUTER: OpenRouterProvider,
+        ProviderType.COMPLETIONSME: CompletionsMeProvider,
     }
     
     @classmethod
