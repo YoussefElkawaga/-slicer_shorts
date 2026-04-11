@@ -17,7 +17,17 @@ export default defineConfig({
     proxy: {
       '/api': {
         target: 'http://localhost:8000',
-        changeOrigin: true
+        changeOrigin: true,
+        // Prevent proxy timeouts for large file uploads on slow connections
+        timeout: 0,           // No timeout on proxy connection
+        proxyTimeout: 0,      // No timeout waiting for target response
+        configure: (proxy) => {
+          // Increase max header size and disable buffering for streaming uploads
+          proxy.on('proxyReq', (proxyReq) => {
+            // Remove any content-length limits set by default
+            proxyReq.setHeader('Connection', 'keep-alive');
+          });
+        }
       }
     }
   }

@@ -174,7 +174,7 @@ export const projectApi = {
   },
 
   // Upload files and create project
-  uploadFiles: async (data: UploadFilesRequest): Promise<Project> => {
+  uploadFiles: async (data: UploadFilesRequest, onUploadProgress?: (progress: number) => void): Promise<Project> => {
     const formData = new FormData()
     formData.append('video_file', data.video_file)
     if (data.srt_file) {
@@ -188,11 +188,26 @@ export const projectApi = {
       formData.append('shorts_duration_preset', data.shorts_duration_preset)
     }
     
-    return api.post('/projects/upload', formData, {
+    // Use a dedicated axios call with NO timeout for uploads.
+    // The global api instance has a 5-minute timeout which is too short
+    // for large videos on slow connections.
+    const token = localStorage.getItem('teamToken');
+    const response = await axios.post('/api/v1/projects/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
       },
+      timeout: 0, // No timeout — upload can take as long as it needs
+      maxContentLength: Infinity,
+      maxBodyLength: Infinity,
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          const percent = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          onUploadProgress?.(percent)
+        }
+      }
     })
+    return response.data
   },
 
   // Delete project

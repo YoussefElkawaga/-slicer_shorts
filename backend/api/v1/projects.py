@@ -82,11 +82,15 @@ async def upload_files(
         from ...core.path_utils import get_project_raw_directory
         raw_dir = get_project_raw_directory(project_id)
         
-        # 保存视频文件
+        # 保存视频文件 - 使用分块流式写入，避免大文件占满内存
         video_path = raw_dir / "input.mp4"
+        CHUNK_SIZE = 8 * 1024 * 1024  # 8MB chunks
         with open(video_path, "wb") as f:
-            content = await video_file.read()
-            f.write(content)
+            while True:
+                chunk = await video_file.read(CHUNK_SIZE)
+                if not chunk:
+                    break
+                f.write(chunk)
         
         # 更新项目的视频路径
         project.video_path = str(video_path)
@@ -130,8 +134,11 @@ async def upload_files(
             # 用户提供了字幕文件
             srt_path = raw_dir / "input.srt"
             with open(srt_path, "wb") as f:
-                content = await srt_file.read()
-                f.write(content)
+                while True:
+                    chunk = await srt_file.read(CHUNK_SIZE)
+                    if not chunk:
+                        break
+                    f.write(chunk)
             logger.info(f"用户提供的字幕文件已保存: {srt_path}")
         
         # 启动异步处理任务 (uses auto_pipeline_service with Redis/Celery fallback)

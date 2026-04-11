@@ -93,21 +93,9 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
     setUploadProgress(0)
     
     try {
-      // Simulate upload progress with realistic display
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 85) {
-            clearInterval(progressInterval)
-            return prev
-          }
-          // Use decreasing increments to simulate realistic upload progress
-          const increment = Math.max(1, Math.floor((90 - prev) / 10))
-          return prev + increment
-        })
-      }, 300)
-
       console.log('Starting file upload:', {
         video_file: files.video.name,
+        video_size_mb: (files.video.size / 1024 / 1024).toFixed(2),
         srt_file: files.srt?.name || '(will use speech recognition)',
         project_name: projectName.trim(),
         video_category: selectedCategory
@@ -119,11 +107,14 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
         project_name: projectName.trim(),
         video_category: selectedCategory,
         shorts_duration_preset: selectedDurationPreset
+      }, (progress) => {
+        // Real upload progress from axios onUploadProgress
+        // Cap at 95% — the last 5% is for server-side processing (thumbnail, pipeline start)
+        setUploadProgress(Math.min(progress, 95))
       })
       
       console.log('Upload successful, project info:', newProject)
       
-      clearInterval(progressInterval)
       setUploadProgress(100)
       
       addProject(newProject)
@@ -583,7 +574,11 @@ const FileUpload: React.FC<FileUploadProps> = ({ onUploadSuccess }) => {
             style={{ marginBottom: '8px' }}
           />
           <Text style={{ color: '#cccccc', fontSize: '13px', marginTop: '8px', display: 'block', textAlign: 'center' }}>
-            Importing files, please wait...
+            {uploadProgress < 95 
+              ? `Uploading video... ${files.video ? (files.video.size / 1024 / 1024 * uploadProgress / 100).toFixed(1) + ' / ' + (files.video.size / 1024 / 1024).toFixed(1) + ' MB' : ''}` 
+              : uploadProgress < 100 
+                ? 'Server processing... please wait'
+                : 'Complete!'}
           </Text>
         </div>
       )}

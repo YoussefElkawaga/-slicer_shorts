@@ -362,6 +362,7 @@ start_backend() {
     nohup python -m uvicorn backend.main:app \
         --host 0.0.0.0 \
         --port "$BACKEND_PORT" \
+        --timeout-keep-alive 300 \
         --reload \
         --reload-dir backend \
         --reload-include '*.py' \

@@ -100,4 +100,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=5 \
 
 # 启动命令
 ENTRYPOINT ["./docker-entrypoint.sh"]
-CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["python", "-m", "uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000", "--timeout-keep-alive", "300"]
